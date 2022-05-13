@@ -297,7 +297,8 @@ class ImageLabel(QLabel):
     def change_contrast(self, contrast: int) -> None:
         """Change the contrast of the pixels in the image.
            Contrast is the difference between max and min pixel intensity."""
-
+        # TODO using open cv, add functionality to change contrast
+        # TODO transform image in np array to another place
         image_exists = (self.image.width() and self.image.height())
         if not image_exists:
             return
