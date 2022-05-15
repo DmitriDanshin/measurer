@@ -3,12 +3,23 @@ import numpy as np
 
 from PyQt5.QtCore import Qt, QSize, QRect
 from PyQt5.QtGui import QPixmap, QImage, QColor, QTransform, qRgb
-from PyQt5.QtWidgets import QLabel, QMessageBox, QFileDialog, QSizePolicy, QRubberBand
+from PyQt5.QtWidgets import QLabel, QMessageBox, QFileDialog, QSizePolicy, QRubberBand, QMainWindow
 
+
+# TODO: save all parameters state after each change
 
 class MainImage(QImage):
+    @property
     def as_array(self):
-        return 1
+        image = self.convertToFormat(QImage.Format_RGB32)
+
+        width = image.width()
+        height = image.height()
+
+        ptr = image.bits()
+        ptr.setsize(image.byteCount())
+
+        return np.array(ptr).reshape((height, width, QImage.Format_RGB32))
 
     def as_qimage(self):
         return self.copy()
@@ -19,21 +30,28 @@ class MainImage(QImage):
 
 class Image(QLabel):
     """Subclass of QLabel for displaying image"""
+    image: MainImage
+    original_image: MainImage
+    qpixmap: QPixmap
 
-    def __init__(self, parent):
+    def __init__(self, parent: QMainWindow):
         super().__init__(parent)
 
         self.parent = parent
+
         self.image = MainImage()
 
         self.original_image = self.image
 
         self.rubber_band = QRubberBand(QRubberBand.Rectangle, self)
 
+        self.__init_settings()
+
+    def __init_settings(self):
         self.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
         self.setScaledContents(True)
-
-        self.setPixmap(QPixmap().fromImage(self.image))
+        self.qpixmap = QPixmap()
+        self.setPixmap(self.qpixmap.fromImage(self.image))
         self.setAlignment(Qt.AlignCenter)
 
     def open_image(self) -> None:
@@ -73,7 +91,7 @@ class Image(QLabel):
 
     def revertToOriginal(self):
         """Revert the image back to original image."""
-        # TODO: Display message dialohg to confirm actions
+        # TODO: Display message dialog to confirm actions
         self.image = self.original_image
         self.setPixmap(QPixmap().fromImage(self.image))
         self.repaint()
@@ -196,72 +214,53 @@ class Image(QLabel):
         self.setPixmap(QPixmap().fromImage(self.image))
         self.repaint()
 
-    def changeBrighteness(self, value):
-        # TODO: Reset the value of brightness, remember the original values
-        # as going back to 0, i.e. keep track of original image's values
-        # TODO: modify values based on original image
-        if value < -255 or value > 255:
-            return self.image
+    def __image_exists(self) -> bool:
+        return bool(self.image.width() and self.image.height())
 
-        for row_pixel in range(self.image.width()):
-            for col_pixel in range(self.image.height()):
-                current_val = QColor(self.image.pixel(row_pixel, col_pixel))
-                red = current_val.red()
-                green = current_val.green()
-                blue = current_val.blue()
+    def __get_pixmap(self, image_array: np.array) -> QPixmap:
+        qimage = MainImage(
+            image_array,
+            image_array.shape[1],
+            image_array.shape[0],
+            QImage.Format_RGB32
+        ).as_qimage()
 
-                new_red = red + value
-                new_green = green + value
-                new_blue = blue + value
+        return self.qpixmap.fromImage(qimage)
 
-                # Set the new RGB values for the current pixel
-                if new_red > 255:
-                    red = 255
-                elif new_red < 0:
-                    red = 0
-                else:
-                    red = new_red
+    def change_brightness(self, brightness: int) -> None:
+        """
+        Change the brightness of the pixels in the image.
+        Brightness is the measured intensity of all the pixels.
+        """
 
-                if new_green > 255:
-                    green = 255
-                elif new_green < 0:
-                    green = 0
-                else:
-                    green = new_green
-
-                if new_blue > 255:
-                    blue = 255
-                elif new_blue < 0:
-                    blue = 0
-                else:
-                    blue = new_blue
-
-                print(red, green, blue)
-                new_value = qRgb(red, green, blue)
-                self.image.setPixel(row_pixel, col_pixel, new_value)
-
-        self.setPixmap(QPixmap().fromImage(self.image))
-
-    def change_contrast(self, contrast: int) -> None:
-        """Change the contrast of the pixels in the image.
-           Contrast is the difference between max and min pixel intensity."""
-        # TODO using open cv, add functionality to change contrast
-        # TODO transform image in np array to another place
-        image_exists = (self.image.width() and self.image.height())
-        if not image_exists:
+        if not self.__image_exists():
             return
 
-        image = self.image.convertToFormat(QImage.Format_RGB32)
+        image_array = self.image.as_array
+        zeros = np.zeros(image_array.shape, image_array.dtype)
 
-        width = image.width()
-        height = image.height()
+        image_array = cv2.addWeighted(image_array, 1, zeros, 0, brightness)
 
-        ptr = image.bits()
-        ptr.setsize(image.byteCount())
-        arr = np.array(ptr).reshape((height, width, QImage.Format_RGB32))
+        pixmap = self.__get_pixmap(image_array)
 
-        cv2.imshow("image", arr)
-        self.setPixmap(QPixmap().fromImage(self.image))
+        self.setPixmap(pixmap)
+
+    def change_contrast(self, contrast: int) -> None:
+        """
+        Change the contrast of the pixels in the image.
+        Contrast is the difference between max and min pixel intensity.
+        """
+
+        if not self.__image_exists():
+            return
+
+        image = self.image.as_array
+        zeros = np.zeros(image.shape, image.dtype)
+        image_array = cv2.addWeighted(image, 1.0 + contrast / 100, zeros, 0, 0)
+
+        pixmap = self.__get_pixmap(image_array)
+
+        self.setPixmap(pixmap)
 
     def changeHue(self):
         for row_pixel in range(self.image.width()):
@@ -279,7 +278,7 @@ class Image(QLabel):
     def mousePressEvent(self, event):
         """Handle mouse press event."""
         self.origin = event.pos()
-        if not (self.rubber_band):
+        if not self.rubber_band:
             self.rubber_band = QRubberBand(QRubberBand.Rectangle, self)
         self.rubber_band.setGeometry(QRect(self.origin, QSize()))
         self.rubber_band.show()

@@ -6,10 +6,8 @@ from PyQt5.QtWidgets import (QMainWindow, QWidget, QLabel, QAction,
                              QSlider, QToolButton, QToolBar, QDockWidget, QMessageBox, QGridLayout,
                              QScrollArea)
 
-from measurer.settings import RotateDirection, AxisDirection
+from measurer.settings import RotateDirection, AxisDirection, ICON_PATH
 from views.image import Image
-
-icon_path = "../assets/icons"
 
 
 class MeasurerGUI(QMainWindow):
@@ -41,23 +39,23 @@ class MeasurerGUI(QMainWindow):
         about_act = QAction('About', self)
         about_act.triggered.connect(self.aboutDialog)
 
-        self.exit_act = QAction(QIcon(os.path.join(icon_path, "exit.png")), 'Quit Photo Editor', self)
+        self.exit_act = QAction(QIcon(os.path.join(ICON_PATH, "exit.png")), 'Quit Photo Editor', self)
         self.exit_act.setShortcut('Ctrl+Q')
         self.exit_act.triggered.connect(self.close)
 
         # Actions for File menu
-        self.new_act = QAction(QIcon(os.path.join(icon_path, "new.png")), 'New...')
+        self.new_act = QAction(QIcon(os.path.join(ICON_PATH, "new.png")), 'New...')
 
-        self.open_act = QAction(QIcon(os.path.join(icon_path, "open.png")), 'Open...', self)
+        self.open_act = QAction(QIcon(os.path.join(ICON_PATH, "open.png")), 'Open...', self)
         self.open_act.setShortcut('Ctrl+O')
         self.open_act.triggered.connect(self.image_label.open_image)
 
-        self.print_act = QAction(QIcon(os.path.join(icon_path, "print.png")), "Print...", self)
+        self.print_act = QAction(QIcon(os.path.join(ICON_PATH, "print.png")), "Print...", self)
         self.print_act.setShortcut('Ctrl+P')
         # self.print_act.triggered.connect(self.printImage)
         self.print_act.setEnabled(False)
 
-        self.save_act = QAction(QIcon(os.path.join(icon_path, "save.png")), "Save...", self)
+        self.save_act = QAction(QIcon(os.path.join(ICON_PATH, "save.png")), "Save...", self)
         self.save_act.setShortcut('Ctrl+S')
         self.save_act.triggered.connect(self.image_label.save_image)
         self.save_act.setEnabled(False)
@@ -68,32 +66,32 @@ class MeasurerGUI(QMainWindow):
         self.revert_act.setEnabled(False)
 
         # Actions for Tools menu
-        self.crop_act = QAction(QIcon(os.path.join(icon_path, "crop.png")), "Crop", self)
+        self.crop_act = QAction(QIcon(os.path.join(ICON_PATH, "crop.png")), "Crop", self)
         self.crop_act.setShortcut('Shift+X')
         self.crop_act.triggered.connect(self.image_label.cropImage)
 
-        self.resize_act = QAction(QIcon(os.path.join(icon_path, "resize.png")), "Resize", self)
+        self.resize_act = QAction(QIcon(os.path.join(ICON_PATH, "resize.png")), "Resize", self)
         self.resize_act.setShortcut('Shift+Z')
         self.resize_act.triggered.connect(self.image_label.resizeImage)
 
-        self.rotate90_cw_act = QAction(QIcon(os.path.join(icon_path, "rotate90_cw.png")), 'Rotate 90º CW', self)
+        self.rotate90_cw_act = QAction(QIcon(os.path.join(ICON_PATH, "rotate90_cw.png")), 'Rotate 90º CW', self)
         self.rotate90_cw_act.triggered.connect(lambda: self.image_label.rotate_image(RotateDirection().cw))
 
-        self.rotate90_ccw_act = QAction(QIcon(os.path.join(icon_path, "rotate90_ccw.png")), 'Rotate 90º CCW', self)
+        self.rotate90_ccw_act = QAction(QIcon(os.path.join(ICON_PATH, "rotate90_ccw.png")), 'Rotate 90º CCW', self)
         self.rotate90_ccw_act.triggered.connect(lambda: self.image_label.rotate_image(RotateDirection().ccw))
 
-        self.flip_horizontal = QAction(QIcon(os.path.join(icon_path, "flip_horizontal.png")), 'Flip Horizontal', self)
+        self.flip_horizontal = QAction(QIcon(os.path.join(ICON_PATH, "flip_horizontal.png")), 'Flip Horizontal', self)
         self.flip_horizontal.triggered.connect(lambda: self.image_label.flip_image(AxisDirection().horizontal))
 
-        self.flip_vertical = QAction(QIcon(os.path.join(icon_path, "flip_vertical.png")), 'Flip Vertical', self)
+        self.flip_vertical = QAction(QIcon(os.path.join(ICON_PATH, "flip_vertical.png")), 'Flip Vertical', self)
         self.flip_vertical.triggered.connect(lambda: self.image_label.flip_image(AxisDirection().vertical))
 
-        self.zoom_in_act = QAction(QIcon(os.path.join(icon_path, "zoom_in.png")), 'Zoom In', self)
+        self.zoom_in_act = QAction(QIcon(os.path.join(ICON_PATH, "zoom_in.png")), 'Zoom In', self)
         self.zoom_in_act.setShortcut('Ctrl++')
         self.zoom_in_act.triggered.connect(lambda: self.zoomOnImage(1.25))
         self.zoom_in_act.setEnabled(False)
 
-        self.zoom_out_act = QAction(QIcon(os.path.join(icon_path, "zoom_out.png")), 'Zoom Out', self)
+        self.zoom_out_act = QAction(QIcon(os.path.join(ICON_PATH, "zoom_out.png")), 'Zoom Out', self)
         self.zoom_out_act.setShortcut('Ctrl+-')
         self.zoom_out_act.triggered.connect(lambda: self.zoomOnImage(0.8))
         self.zoom_out_act.setEnabled(False)
@@ -104,7 +102,7 @@ class MeasurerGUI(QMainWindow):
         self.normal_size_Act.setEnabled(False)
 
         # Actions for Views menu
-        # self.tools_menu_act = QAction(QIcon(os.path.join(icon_path, "edit.png")),'Tools View...', self, checkable=True)
+        # self.tools_menu_act = QAction(QIcon(os.path.join(ICON_PATH, "edit.png")),'Tools View...', self, checkable=True)
 
         # Create menubar
         menu_bar = self.menuBar()
@@ -176,19 +174,19 @@ class MeasurerGUI(QMainWindow):
         filters_label = QLabel("Filters")
 
         convert_to_grayscale = QToolButton()
-        convert_to_grayscale.setIcon(QIcon(os.path.join(icon_path, "grayscale.png")))
+        convert_to_grayscale.setIcon(QIcon(os.path.join(ICON_PATH, "grayscale.png")))
         convert_to_grayscale.clicked.connect(self.image_label.convertToGray)
 
         convert_to_RGB = QToolButton()
-        convert_to_RGB.setIcon(QIcon(os.path.join(icon_path, "rgb.png")))
+        convert_to_RGB.setIcon(QIcon(os.path.join(ICON_PATH, "rgb.png")))
         convert_to_RGB.clicked.connect(self.image_label.convert2rgb)
 
         convert_to_sepia = QToolButton()
-        convert_to_sepia.setIcon(QIcon(os.path.join(icon_path, "sepia.png")))
+        convert_to_sepia.setIcon(QIcon(os.path.join(ICON_PATH, "sepia.png")))
         convert_to_sepia.clicked.connect(self.image_label.convertToSepia)
 
         change_hue = QToolButton()
-        change_hue.setIcon(QIcon(os.path.join(icon_path, "")))
+        change_hue.setIcon(QIcon(os.path.join(ICON_PATH, "")))
         change_hue.clicked.connect(self.image_label.changeHue)
 
         brightness_label = QLabel("Brightness")
@@ -196,11 +194,11 @@ class MeasurerGUI(QMainWindow):
         self.brightness_slider.setRange(-255, 255)
         self.brightness_slider.setTickInterval(35)
         self.brightness_slider.setTickPosition(QSlider.TicksAbove)
-        self.brightness_slider.valueChanged.connect(self.image_label.changeBrighteness)
+        self.brightness_slider.valueChanged.connect(self.image_label.change_brightness)
 
         contrast_label = QLabel("Contrast")
         self.contrast_slider = QSlider(Qt.Horizontal)
-        self.contrast_slider.setRange(-255, 255)
+        self.contrast_slider.setRange(-100, 500)
         self.contrast_slider.setTickInterval(35)
         self.contrast_slider.setTickPosition(QSlider.TicksAbove)
         self.contrast_slider.valueChanged.connect(self.image_label.change_contrast)

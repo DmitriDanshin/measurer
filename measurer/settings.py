@@ -1,4 +1,7 @@
 from dataclasses import dataclass
+from typing import Final
+
+ICON_PATH: Final = "../assets/icons"
 
 
 @dataclass(frozen=True, slots=True)
