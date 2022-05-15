@@ -3,80 +3,64 @@ import numpy as np
 
 from PyQt5.QtCore import Qt, QSize, QRect
 from PyQt5.QtGui import QPixmap, QImage, QColor, QTransform, qRgb
-from PyQt5.QtWidgets import (QLabel, QMessageBox, QFileDialog, QSizePolicy, QRubberBand)
+from PyQt5.QtWidgets import QLabel, QMessageBox, QFileDialog, QSizePolicy, QRubberBand
+
+
+class MainImage(QImage):
+    def as_array(self):
+        return 1
+
+    def as_qimage(self):
+        return self.copy()
+
+    def update(self, new_image: "MainImage") -> None:
+        raise NotImplemented()
 
 
 class Image(QLabel):
     """Subclass of QLabel for displaying image"""
 
-    def __init__(self, parent, image=None):
+    def __init__(self, parent):
         super().__init__(parent)
 
         self.parent = parent
-        self.image = QImage()
-        # self.image = "images/parrot.png"
+        self.image = MainImage()
 
-        # self.original_image = self.image.copy
         self.original_image = self.image
 
         self.rubber_band = QRubberBand(QRubberBand.Rectangle, self)
 
-        # setBackgroundRole() will create a bg for the image
-        # self.setBackgroundRole(QPalette.Base)
         self.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
         self.setScaledContents(True)
 
-        # Load image
         self.setPixmap(QPixmap().fromImage(self.image))
         self.setAlignment(Qt.AlignCenter)
 
-    def open_image(self):
-        """Load a new image into the """
+    def open_image(self) -> None:
+        """Load a new image into the label"""
         options = QFileDialog.Options() | QFileDialog.DontUseNativeDialog
         image, _ = QFileDialog.getOpenFileName(self, "QFileDialog.getOpenFileName()", "",
                                                "All Files (*);;Python Files (*.py)", options=options)
-
         if image:
-            # Reset values when opening an image
             self.parent.zoom_factor = 1
-            # self.parent.scroll_area.setVisible(True)
             self.parent.print_act.setEnabled(True)
             self.parent.updateActions()
-
-            # Reset all sliders
             self.parent.brightness_slider.setValue(0)
 
-            # Get image format
-            image_format = self.image.format()
-            self.image = QImage(image)
+            self.image = MainImage(image)
             self.original_image = self.image.copy()
-
-            # pixmap = QPixmap(image_file)
             self.setPixmap(QPixmap().fromImage(self.image))
-            # image_size = self.image_label.sizeHint()
             self.resize(self.pixmap().size())
 
-            # self.scroll_area.setMinimumSize(image_size)
-
-            # self.image_label.setPixmap(pixmap.scaled(self.image_label.size(),
-            #    Qt.KeepAspectRatio, Qt.SmoothTransformation))
-        elif image == "":
-            # User selected Cancel
-            pass
-        else:
-            QMessageBox.information(self, "Error",
-                                    "Unable to open image.", QMessageBox.Ok)
-
-    def saveImage(self):
+    def save_image(self) -> None:
         """Save the image displayed in the label."""
-        # TODO: Add different functionality for the way in which the user can save their image.
-        if self.image.isNull() == False:
-            image_file, _ = QFileDialog.getSaveFileName(self, "Save Image",
-                                                        "", "PNG Files (*.png);;JPG Files (*.jpeg *.jpg );;Bitmap Files (*.bmp);;\
-                    GIF Files (*.gif)")
 
-            if image_file and self.image.isNull() == False:
-                self.image.save(image_file)
+        if not self.image.isNull():
+            image, _ = QFileDialog.getSaveFileName(self, "Save Image", "",
+                                                   "PNG Files (*.png);;JPG Files (*.jpeg *.jpg );;Bitmap Files ("
+                                                   "*.bmp);; GIF Files (*.gif)")
+            if image:
+                self.image.save(image)
             else:
                 QMessageBox.information(self, "Error",
                                         "Unable to save image.", QMessageBox.Ok)
@@ -84,10 +68,8 @@ class Image(QLabel):
             QMessageBox.information(self, "Empty Image",
                                     "There is no image to save.", QMessageBox.Ok)
 
-    def clearImage(self):
-        """ """
-        # TODO: If image is not null ask to save image first.
-        pass
+    def clear_image(self) -> None:
+        raise NotImplemented()
 
     def revertToOriginal(self):
         """Revert the image back to original image."""
@@ -132,56 +114,29 @@ class Image(QLabel):
             self.image = QImage(cropped)
             self.setPixmap(QPixmap().fromImage(cropped))
 
-    def rotateImage90(self, direction):
-        """Rotate image 90º clockwise or counterclockwise."""
-        if self.image.isNull() == False:
-            if direction == "cw":
-                transform90 = QTransform().rotate(90)
-            elif direction == "ccw":
-                transform90 = QTransform().rotate(-90)
+    def rotate_image(self, direction: int) -> None:
+        """Rotate image"""
+        if not self.image.isNull():
+            transform = QTransform().rotate(direction)
+            pixmap = QPixmap(self.image.as_qimage())
+            rotated = pixmap.transformed(transform, mode=Qt.SmoothTransformation)
 
-            pixmap = QPixmap(self.image)
-
-            # TODO: Try flipping the height/width when flipping the image
-
-            rotated = pixmap.transformed(transform90, mode=Qt.SmoothTransformation)
             self.resize(self.image.height(), self.image.width())
-            # rotated = pixmap.trueMatrix(transform90, pixmap.width, pixmap.height)
-
-            # self.image_label.setPixmap(rotated.scaled(self.image_label.size(),
-            #    Qt.KeepAspectRatio, Qt.SmoothTransformation))
-            self.image = QImage(rotated)
-            # self.setPixmap(rotated)
-            self.setPixmap(rotated.scaled(self.size(), Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation))
-            self.repaint()  # repaint the child widget
-        else:
-            # No image to rotate
-            pass
-
-    def flipImage(self, axis):
-        """
-        Mirror the image across the horizontal axis.
-        """
-        if self.image.isNull() == False:
-            if axis == "horizontal":
-                flip_h = QTransform().scale(-1, 1)
-                pixmap = QPixmap(self.image)
-                flipped = pixmap.transformed(flip_h)
-            elif axis == "vertical":
-                flip_v = QTransform().scale(1, -1)
-                pixmap = QPixmap(self.image)
-                flipped = pixmap.transformed(flip_v)
-
-            # self.image_label.setPixmap(flipped)
-            # self.image_label.setPixmap(flipped.scaled(self.image_label.size(),
-            #    Qt.KeepAspectRatio, Qt.SmoothTransformation))
-            self.image = QImage(flipped)
-            self.setPixmap(flipped)
-            # self.image = QPixmap(flipped)
+            self.image = MainImage(rotated)
+            self.setPixmap(rotated.scaled(self.size()))
             self.repaint()
-        else:
-            # No image to flip
-            pass
+
+    def flip_image(self, axis: tuple[float, float]) -> None:
+        """Mirror the image across the horizontal axis."""
+        if not self.image.isNull():
+            transform = QTransform().scale(*axis)
+
+            pixmap = QPixmap(self.image.as_qimage())
+            flipped = pixmap.transformed(transform)
+
+            self.image = MainImage(flipped)
+            self.setPixmap(flipped)
+            self.repaint()
 
     def convertToGray(self):
         """Convert image to grayscale."""

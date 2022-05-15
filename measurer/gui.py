@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import (QMainWindow, QWidget, QLabel, QAction,
                              QSlider, QToolButton, QToolBar, QDockWidget, QMessageBox, QGridLayout,
                              QScrollArea)
 
+from measurer.settings import RotateDirection, AxisDirection
 from views.image import Image
 
 icon_path = "../assets/icons"
@@ -58,7 +59,7 @@ class MeasurerGUI(QMainWindow):
 
         self.save_act = QAction(QIcon(os.path.join(icon_path, "save.png")), "Save...", self)
         self.save_act.setShortcut('Ctrl+S')
-        self.save_act.triggered.connect(self.image_label.saveImage)
+        self.save_act.triggered.connect(self.image_label.save_image)
         self.save_act.setEnabled(False)
 
         # Actions for Edit menu
@@ -76,16 +77,16 @@ class MeasurerGUI(QMainWindow):
         self.resize_act.triggered.connect(self.image_label.resizeImage)
 
         self.rotate90_cw_act = QAction(QIcon(os.path.join(icon_path, "rotate90_cw.png")), 'Rotate 90º CW', self)
-        self.rotate90_cw_act.triggered.connect(lambda: self.image_label.rotateImage90("cw"))
+        self.rotate90_cw_act.triggered.connect(lambda: self.image_label.rotate_image(RotateDirection().cw))
 
         self.rotate90_ccw_act = QAction(QIcon(os.path.join(icon_path, "rotate90_ccw.png")), 'Rotate 90º CCW', self)
-        self.rotate90_ccw_act.triggered.connect(lambda: self.image_label.rotateImage90("ccw"))
+        self.rotate90_ccw_act.triggered.connect(lambda: self.image_label.rotate_image(RotateDirection().ccw))
 
         self.flip_horizontal = QAction(QIcon(os.path.join(icon_path, "flip_horizontal.png")), 'Flip Horizontal', self)
-        self.flip_horizontal.triggered.connect(lambda: self.image_label.flipImage("horizontal"))
+        self.flip_horizontal.triggered.connect(lambda: self.image_label.flip_image(AxisDirection().horizontal))
 
         self.flip_vertical = QAction(QIcon(os.path.join(icon_path, "flip_vertical.png")), 'Flip Vertical', self)
-        self.flip_vertical.triggered.connect(lambda: self.image_label.flipImage('vertical'))
+        self.flip_vertical.triggered.connect(lambda: self.image_label.flip_image(AxisDirection().vertical))
 
         self.zoom_in_act = QAction(QIcon(os.path.join(icon_path, "zoom_in.png")), 'Zoom In', self)
         self.zoom_in_act.setShortcut('Ctrl++')
@@ -282,7 +283,7 @@ class MeasurerGUI(QMainWindow):
         """Handle key press events."""
         if event.key() == Qt.Key_Escape:
             self.close()
-        if event.key() == Qt.Key_F1:  # fn + F1 on Mac
+        if event.key() == Qt.Key_F1:
             if self.isMaximized():
                 self.showNormal()
             else:
