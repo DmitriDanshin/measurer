@@ -1,0 +1,29 @@
+{
+  "ICON_PATH": "assets/icons",
+  "CONTRAST_MIN_VALUE": -100,
+  "CONTRAST_MAX_VALUE": 500,
+  "BRIGHTNESS_MIN_VALUE": -255,
+  "BRIGHTNESS_MAX_VALUE": 255,
+  "ZOOM_FACTOR": 0.1,
+  "MOUSEWHEEL_UP": 120,
+  "MOUSEWHEEL_DOWN": -120,
+  "MAIN_WINDOW": {
+    "MIN_WIDTH": 300,
+    "MIN_HEIGHT": 200,
+    "TITLE": "Measurer"
+  },
+  "ROTATION_DIRECTION": {
+    "CW": 90,
+    "CCW": -90
+  },
+  "REFLECTION_DIRECTION": {
+    "HORIZONTAL": [
+      -1,
+      1
+    ],
+    "VERTICAL": [
+      1,
+      -1
+    ]
+  }
+}

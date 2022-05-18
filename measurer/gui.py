@@ -1,3 +1,4 @@
+import json
 import os
 
 from PyQt5.QtCore import Qt, QSize
@@ -6,60 +7,65 @@ from PyQt5.QtWidgets import (QMainWindow, QWidget, QLabel, QAction,
                              QSlider, QToolButton, QToolBar, QDockWidget, QMessageBox,
                              QGridLayout, QScrollBar)
 
-from measurer.settings import RotateDirection, AxisDirection, ICON_PATH, CONTRAST_MIN_VALUE, CONTRAST_MAX_VALUE, \
-    BRIGHTNESS_MIN_VALUE, BRIGHTNESS_MAX_VALUE
 from views.image import Image
 from views.scroller import Scroller
 
 
+def load_settings():
+    with open('settings.json') as settings_file:
+        return json.load(settings_file)
+
+
+settings = load_settings()
+
+
 class MeasurerGUI(QMainWindow):
-    zoom_factor: float
     scroll_area: Scroller
+    exit_act: QAction
+    new_act: QAction
 
     def __init__(self):
         super().__init__()
-
         self.initializeUI()
-
         self.image = QImage()
 
     def initializeUI(self):
-        self.setMinimumSize(300, 200)
-        self.setWindowTitle("Photo Editor")
+        self.setMinimumSize(
+            settings["MAIN_WINDOW"]["MIN_WIDTH"],
+            settings["MAIN_WINDOW"]["MIN_HEIGHT"]
+        )
+        self.setWindowTitle(
+            settings["MAIN_WINDOW"]["TITLE"]
+        )
         self.showMaximized()
-
-        self.zoom_factor = 1.0
-
         self.createMainLabel()
         self.createEditingBar()
-        self.createMenu()
+        self.create_menu()
         self.createToolBar()
-
         self.show()
 
-    def createMenu(self):
+    def create_menu(self) -> None:
         """Set up the menubar."""
         # Actions for Photo Editor menu
         about_act = QAction('About', self)
         about_act.triggered.connect(self.aboutDialog)
 
-        self.exit_act = QAction(QIcon(os.path.join(ICON_PATH, "exit.png")), 'Quit Photo Editor', self)
+        self.exit_act = QAction(QIcon(os.path.join(settings['ICON_PATH'], "exit.png")), 'Quit Photo Editor', self)
         self.exit_act.setShortcut('Ctrl+Q')
         self.exit_act.triggered.connect(self.close)
 
         # Actions for File menu
-        self.new_act = QAction(QIcon(os.path.join(ICON_PATH, "new.png")), 'New...')
+        self.new_act = QAction(QIcon(os.path.join(settings['ICON_PATH'], "new.png")), 'New...')
 
-        self.open_act = QAction(QIcon(os.path.join(ICON_PATH, "open.png")), 'Open...', self)
+        self.open_act = QAction(QIcon(os.path.join(settings['ICON_PATH'], "open.png")), 'Open...', self)
         self.open_act.setShortcut('Ctrl+O')
         self.open_act.triggered.connect(self.image_label.open_image)
 
-        self.print_act = QAction(QIcon(os.path.join(ICON_PATH, "print.png")), "Print...", self)
+        self.print_act = QAction(QIcon(os.path.join(settings['ICON_PATH'], "print.png")), "Print...", self)
         self.print_act.setShortcut('Ctrl+P')
-        # self.print_act.triggered.connect(self.printImage)
         self.print_act.setEnabled(False)
 
-        self.save_act = QAction(QIcon(os.path.join(ICON_PATH, "save.png")), "Save...", self)
+        self.save_act = QAction(QIcon(os.path.join(settings['ICON_PATH'], "save.png")), "Save...", self)
         self.save_act.setShortcut('Ctrl+S')
         self.save_act.triggered.connect(self.image_label.save_image)
         self.save_act.setEnabled(False)
@@ -70,32 +76,45 @@ class MeasurerGUI(QMainWindow):
         self.revert_act.setEnabled(False)
 
         # Actions for Tools menu
-        self.crop_act = QAction(QIcon(os.path.join(ICON_PATH, "crop.png")), "Crop", self)
+        self.crop_act = QAction(QIcon(os.path.join(settings['ICON_PATH'], "crop.png")), "Crop", self)
         self.crop_act.setShortcut('Shift+X')
         self.crop_act.triggered.connect(self.image_label.cropImage)
 
-        self.resize_act = QAction(QIcon(os.path.join(ICON_PATH, "resize.png")), "Resize", self)
+        self.resize_act = QAction(QIcon(os.path.join(settings['ICON_PATH'], "resize.png")), "Resize", self)
         self.resize_act.setShortcut('Shift+Z')
         self.resize_act.triggered.connect(self.image_label.resizeImage)
 
-        self.rotate90_cw_act = QAction(QIcon(os.path.join(ICON_PATH, "rotate90_cw.png")), 'Rotate 90º CW', self)
-        self.rotate90_cw_act.triggered.connect(lambda: self.image_label.rotate_image(RotateDirection().cw))
+        self.rotate90_cw_act = QAction(QIcon(os.path.join(settings['ICON_PATH'], "rotate90_cw.png")), 'Rotate 90º CW',
+                                       self)
+        self.rotate90_cw_act.triggered.connect(
+            lambda: self.image_label.rotate_image(settings["ROTATION_DIRECTION"]["CW"])
+        )
 
-        self.rotate90_ccw_act = QAction(QIcon(os.path.join(ICON_PATH, "rotate90_ccw.png")), 'Rotate 90º CCW', self)
-        self.rotate90_ccw_act.triggered.connect(lambda: self.image_label.rotate_image(RotateDirection().ccw))
+        self.rotate90_ccw_act = QAction(QIcon(os.path.join(settings['ICON_PATH'], "rotate90_ccw.png")),
+                                        'Rotate 90º CCW', self)
+        self.rotate90_ccw_act.triggered.connect(
+            lambda: self.image_label.rotate_image(settings["ROTATION_DIRECTION"]["CCW"])
+        )
 
-        self.flip_horizontal = QAction(QIcon(os.path.join(ICON_PATH, "flip_horizontal.png")), 'Flip Horizontal', self)
-        self.flip_horizontal.triggered.connect(lambda: self.image_label.flip_image(AxisDirection().horizontal))
+        self.flip_horizontal = QAction(
+            QIcon(os.path.join(settings['ICON_PATH'], "flip_horizontal.png")), 'Flip Horizontal', self
+        )
+        self.flip_horizontal.triggered.connect(
+            lambda: self.image_label.flip_image(settings["REFLECTION_DIRECTION"]["HORIZONTAL"])
+        )
 
-        self.flip_vertical = QAction(QIcon(os.path.join(ICON_PATH, "flip_vertical.png")), 'Flip Vertical', self)
-        self.flip_vertical.triggered.connect(lambda: self.image_label.flip_image(AxisDirection().vertical))
+        self.flip_vertical = QAction(QIcon(os.path.join(settings['ICON_PATH'], "flip_vertical.png")), 'Flip Vertical',
+                                     self)
+        self.flip_vertical.triggered.connect(
+            lambda: self.image_label.flip_image(settings["REFLECTION_DIRECTION"]["VERTICAL"])
+        )
 
-        self.zoom_in_act = QAction(QIcon(os.path.join(ICON_PATH, "zoom_in.png")), 'Zoom In', self)
+        self.zoom_in_act = QAction(QIcon(os.path.join(settings['ICON_PATH'], "zoom_in.png")), 'Zoom In', self)
         self.zoom_in_act.setShortcut('Ctrl++')
         self.zoom_in_act.triggered.connect(lambda: self.zoom_image(1.25))
         self.zoom_in_act.setEnabled(False)
 
-        self.zoom_out_act = QAction(QIcon(os.path.join(ICON_PATH, "zoom_out.png")), 'Zoom Out', self)
+        self.zoom_out_act = QAction(QIcon(os.path.join(settings['ICON_PATH'], "zoom_out.png")), 'Zoom Out', self)
         self.zoom_out_act.setShortcut('Ctrl+-')
         self.zoom_out_act.triggered.connect(lambda: self.zoom_image(0.8))
         self.zoom_out_act.setEnabled(False)
@@ -129,26 +148,26 @@ class MeasurerGUI(QMainWindow):
 
     def createToolBar(self):
         """Set up the toolbar."""
-        tool_bar = QToolBar("Main Toolbar")
-        tool_bar.setIconSize(QSize(26, 26))
-        self.addToolBar(tool_bar)
+        toolbar = QToolBar("Main Toolbar")
+        toolbar.setIconSize(QSize(26, 26))
+        self.addToolBar(toolbar)
 
         # Add actions to the toolbar
-        tool_bar.addAction(self.open_act)
-        tool_bar.addAction(self.save_act)
-        tool_bar.addAction(self.print_act)
-        tool_bar.addAction(self.exit_act)
-        tool_bar.addSeparator()
-        tool_bar.addAction(self.crop_act)
-        tool_bar.addAction(self.resize_act)
-        tool_bar.addSeparator()
-        tool_bar.addAction(self.rotate90_ccw_act)
-        tool_bar.addAction(self.rotate90_cw_act)
-        tool_bar.addAction(self.flip_horizontal)
-        tool_bar.addAction(self.flip_vertical)
-        tool_bar.addSeparator()
-        tool_bar.addAction(self.zoom_in_act)
-        tool_bar.addAction(self.zoom_out_act)
+        toolbar.addAction(self.open_act)
+        toolbar.addAction(self.save_act)
+        toolbar.addAction(self.print_act)
+        toolbar.addAction(self.exit_act)
+        toolbar.addSeparator()
+        toolbar.addAction(self.crop_act)
+        toolbar.addAction(self.resize_act)
+        toolbar.addSeparator()
+        toolbar.addAction(self.rotate90_ccw_act)
+        toolbar.addAction(self.rotate90_cw_act)
+        toolbar.addAction(self.flip_horizontal)
+        toolbar.addAction(self.flip_vertical)
+        toolbar.addSeparator()
+        toolbar.addAction(self.zoom_in_act)
+        toolbar.addAction(self.zoom_out_act)
 
     def createEditingBar(self):
         """Create dock widget for editing tools."""
@@ -157,38 +176,37 @@ class MeasurerGUI(QMainWindow):
         self.editing_bar.setMinimumWidth(90)
 
         convert_to_grayscale = QToolButton()
-        convert_to_grayscale.setIcon(QIcon(os.path.join(ICON_PATH, "grayscale.png")))
+        convert_to_grayscale.setIcon(QIcon(os.path.join(settings['ICON_PATH'], "grayscale.png")))
         convert_to_grayscale.clicked.connect(self.image_label.convertToGray)
 
         convert_to_RGB = QToolButton()
-        convert_to_RGB.setIcon(QIcon(os.path.join(ICON_PATH, "rgb.png")))
+        convert_to_RGB.setIcon(QIcon(os.path.join(settings['ICON_PATH'], "rgb.png")))
         convert_to_RGB.clicked.connect(self.image_label.convert2rgb)
 
         convert_to_sepia = QToolButton()
-        convert_to_sepia.setIcon(QIcon(os.path.join(ICON_PATH, "sepia.png")))
+        convert_to_sepia.setIcon(QIcon(os.path.join(settings['ICON_PATH'], "sepia.png")))
         convert_to_sepia.clicked.connect(self.image_label.convertToSepia)
 
         change_hue = QToolButton()
-        change_hue.setIcon(QIcon(os.path.join(ICON_PATH, "")))
+        change_hue.setIcon(QIcon(os.path.join(settings['ICON_PATH'], "")))
         change_hue.clicked.connect(self.image_label.changeHue)
 
         brightness_label = QLabel("Brightness")
         self.brightness_slider = QSlider(Qt.Horizontal)
-        self.brightness_slider.setRange(BRIGHTNESS_MIN_VALUE, BRIGHTNESS_MAX_VALUE)
+        self.brightness_slider.setRange(settings['BRIGHTNESS_MIN_VALUE'], settings['BRIGHTNESS_MAX_VALUE'])
         self.brightness_slider.setTickInterval(35)
         self.brightness_slider.setTickPosition(QSlider.TicksAbove)
         self.brightness_slider.valueChanged.connect(self.image_label.change_brightness)
 
         contrast_label = QLabel("Contrast")
         self.contrast_slider = QSlider(Qt.Horizontal)
-        self.contrast_slider.setRange(CONTRAST_MIN_VALUE, CONTRAST_MAX_VALUE)
+        self.contrast_slider.setRange(settings['CONTRAST_MIN_VALUE'], settings['CONTRAST_MAX_VALUE'])
         self.contrast_slider.setTickInterval(35)
         self.contrast_slider.setTickPosition(QSlider.TicksAbove)
         self.contrast_slider.valueChanged.connect(self.image_label.change_contrast)
 
-        # Set layout for dock widget
         editing_grid = QGridLayout()
-        # editing_grid.addWidget(filters_label, 0, 0, 0, 2, Qt.AlignTop)
+
         editing_grid.addWidget(convert_to_grayscale, 1, 0)
         editing_grid.addWidget(convert_to_RGB, 1, 1)
         editing_grid.addWidget(convert_to_sepia, 2, 0)
@@ -217,15 +235,9 @@ class MeasurerGUI(QMainWindow):
         self.scroll_area = Scroller()
         self.scroll_area.setBackgroundRole(QPalette.Dark)
         self.scroll_area.setAlignment(Qt.AlignCenter)
-        # self.scroll_area.setWidgetResizable(False)
-        # scroll_area.setMinimumSize(800, 800)
-
         self.scroll_area.setWidget(self.image_label)
-        # self.scroll_area.setVisible(False)
 
         self.setCentralWidget(self.scroll_area)
-
-        # self.resize(QApplication.primaryScreen().availableSize() * 3 / 5)
 
     def updateActions(self):
         """Update the values of menu and toolbar items when an image
@@ -238,19 +250,15 @@ class MeasurerGUI(QMainWindow):
 
     def zoom_image(self, zoom_value: float) -> None:
         """Zoom in and zoom out."""
-        self.zoom_factor *= zoom_value
-        self.image_label.resize(self.zoom_factor * self.image_label.pixmap().size())
+
+        self.image_label.resize(self.image_label.size() * zoom_value)
 
         self.__adjust_scrollbar(self.scroll_area.horizontalScrollBar(), zoom_value)
         self.__adjust_scrollbar(self.scroll_area.verticalScrollBar(), zoom_value)
 
-        self.zoom_in_act.setEnabled(self.zoom_factor < 4.0)
-        self.zoom_out_act.setEnabled(self.zoom_factor > 0.333)
-
     def normalize_size(self):
         """View image with its normal dimensions."""
         self.image_label.adjustSize()
-        self.zoom_factor = 1.0
 
     @staticmethod
     def __adjust_scrollbar(scroll_bar: QScrollBar, value: float) -> None:
@@ -273,10 +281,11 @@ class MeasurerGUI(QMainWindow):
                 self.showMaximized()
 
     def wheelEvent(self, event: QWheelEvent) -> None:
-        if event.angleDelta().y() == 120:
-            self.zoom_image(1.2)
-        else:
-            self.zoom_image(0.8)
+        wheel_direction = event.angleDelta().y()
+        if wheel_direction == settings["MOUSEWHEEL_UP"]:
+            self.zoom_image(1 + settings['ZOOM_FACTOR'])
+        elif wheel_direction == settings["MOUSEWHEEL_DOWN"]:
+            self.zoom_image(1 - settings['ZOOM_FACTOR'])
 
     def closeEvent(self, event):
         pass

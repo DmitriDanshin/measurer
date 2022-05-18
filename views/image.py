@@ -60,7 +60,6 @@ class Image(QLabel):
         image, _ = QFileDialog.getOpenFileName(self, "QFileDialog.getOpenFileName()", "",
                                                "All Files (*);;Python Files (*.py)", options=options)
         if image:
-            self.parent.zoom_factor = 1
             self.parent.print_act.setEnabled(True)
             self.parent.updateActions()
             self.parent.brightness_slider.setValue(0)
@@ -95,8 +94,6 @@ class Image(QLabel):
         self.image = self.original_image
         self.setPixmap(QPixmap().fromImage(self.image))
         self.repaint()
-
-        # self.parent.zoom_factor = 1
 
     def resizeImage(self):
         """Resize image."""
