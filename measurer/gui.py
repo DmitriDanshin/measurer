@@ -6,7 +6,8 @@ from PyQt5.QtWidgets import (QMainWindow, QWidget, QLabel, QAction,
                              QSlider, QToolButton, QToolBar, QDockWidget, QMessageBox,
                              QGridLayout, QScrollBar)
 
-from measurer.settings import RotateDirection, AxisDirection, ICON_PATH
+from measurer.settings import RotateDirection, AxisDirection, ICON_PATH, CONTRAST_MIN_VALUE, CONTRAST_MAX_VALUE, \
+    BRIGHTNESS_MIN_VALUE, BRIGHTNESS_MAX_VALUE
 from views.image import Image
 from views.scroller import Scroller
 
@@ -151,13 +152,9 @@ class MeasurerGUI(QMainWindow):
 
     def createEditingBar(self):
         """Create dock widget for editing tools."""
-        # TODO: Add a tab widget for the different editing tools
         self.editing_bar = QDockWidget("Tools")
         self.editing_bar.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
         self.editing_bar.setMinimumWidth(90)
-
-        # Create editing tool buttons
-        filters_label = QLabel("Filters")
 
         convert_to_grayscale = QToolButton()
         convert_to_grayscale.setIcon(QIcon(os.path.join(ICON_PATH, "grayscale.png")))
@@ -177,14 +174,14 @@ class MeasurerGUI(QMainWindow):
 
         brightness_label = QLabel("Brightness")
         self.brightness_slider = QSlider(Qt.Horizontal)
-        self.brightness_slider.setRange(-255, 255)
+        self.brightness_slider.setRange(BRIGHTNESS_MIN_VALUE, BRIGHTNESS_MAX_VALUE)
         self.brightness_slider.setTickInterval(35)
         self.brightness_slider.setTickPosition(QSlider.TicksAbove)
         self.brightness_slider.valueChanged.connect(self.image_label.change_brightness)
 
         contrast_label = QLabel("Contrast")
         self.contrast_slider = QSlider(Qt.Horizontal)
-        self.contrast_slider.setRange(-100, 500)
+        self.contrast_slider.setRange(CONTRAST_MIN_VALUE, CONTRAST_MAX_VALUE)
         self.contrast_slider.setTickInterval(35)
         self.contrast_slider.setTickPosition(QSlider.TicksAbove)
         self.contrast_slider.valueChanged.connect(self.image_label.change_contrast)

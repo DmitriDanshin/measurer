@@ -2,7 +2,10 @@ from dataclasses import dataclass
 from typing import Final
 
 ICON_PATH: Final = "../assets/icons"
-
+CONTRAST_MIN_VALUE: Final = -100
+CONTRAST_MAX_VALUE: Final = 500
+BRIGHTNESS_MIN_VALUE: Final = -255
+BRIGHTNESS_MAX_VALUE: Final = 255
 
 @dataclass(frozen=True, slots=True)
 class RotateDirection:
