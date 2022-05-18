@@ -123,19 +123,6 @@ class MeasurerGUI(QMainWindow):
         edit_menu = menu_bar.addMenu('Edit')
         edit_menu.addAction(self.revert_act)
 
-        tool_menu = menu_bar.addMenu('Tools')
-        tool_menu.addAction(self.crop_act)
-        tool_menu.addAction(self.resize_act)
-        tool_menu.addSeparator()
-        tool_menu.addAction(self.rotate90_cw_act)
-        tool_menu.addAction(self.rotate90_ccw_act)
-        tool_menu.addAction(self.flip_horizontal)
-        tool_menu.addAction(self.flip_vertical)
-        tool_menu.addSeparator()
-        tool_menu.addAction(self.zoom_in_act)
-        tool_menu.addAction(self.zoom_out_act)
-        tool_menu.addAction(self.normal_size_act)
-
         views_menu = menu_bar.addMenu('Views')
         views_menu.addAction(self.tools_menu_act)
 
