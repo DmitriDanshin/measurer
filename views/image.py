@@ -61,9 +61,7 @@ class Image(QLabel):
                                                "All Files (*);;Python Files (*.py)", options=options)
         if image:
             self.parent.print_act.setEnabled(True)
-            self.parent.updateActions()
-            self.parent.brightness_slider.setValue(0)
-
+            self.parent.update_actions()
             self.image = MainImage(image)
             self.original_image = self.image.copy()
             self.setPixmap(QPixmap().fromImage(self.image))
