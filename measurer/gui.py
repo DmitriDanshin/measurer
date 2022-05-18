@@ -1,16 +1,19 @@
 import os
 
 from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import QIcon, QImage, QPalette
+from PyQt5.QtGui import QIcon, QImage, QPalette, QWheelEvent
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QLabel, QAction,
-                             QSlider, QToolButton, QToolBar, QDockWidget, QMessageBox, QGridLayout,
-                             QScrollArea)
+                             QSlider, QToolButton, QToolBar, QDockWidget, QMessageBox,
+                             QGridLayout, QScrollBar)
 
 from measurer.settings import RotateDirection, AxisDirection, ICON_PATH
 from views.image import Image
+from views.scroller import Scroller
 
 
 class MeasurerGUI(QMainWindow):
+    zoom_factor: float
+    scroll_area: Scroller
 
     def __init__(self):
         super().__init__()
@@ -24,7 +27,7 @@ class MeasurerGUI(QMainWindow):
         self.setWindowTitle("Photo Editor")
         self.showMaximized()
 
-        self.zoom_factor = 1
+        self.zoom_factor = 1.0
 
         self.createMainLabel()
         self.createEditingBar()
@@ -88,23 +91,19 @@ class MeasurerGUI(QMainWindow):
 
         self.zoom_in_act = QAction(QIcon(os.path.join(ICON_PATH, "zoom_in.png")), 'Zoom In', self)
         self.zoom_in_act.setShortcut('Ctrl++')
-        self.zoom_in_act.triggered.connect(lambda: self.zoomOnImage(1.25))
+        self.zoom_in_act.triggered.connect(lambda: self.zoom_image(1.25))
         self.zoom_in_act.setEnabled(False)
 
         self.zoom_out_act = QAction(QIcon(os.path.join(ICON_PATH, "zoom_out.png")), 'Zoom Out', self)
         self.zoom_out_act.setShortcut('Ctrl+-')
-        self.zoom_out_act.triggered.connect(lambda: self.zoomOnImage(0.8))
+        self.zoom_out_act.triggered.connect(lambda: self.zoom_image(0.8))
         self.zoom_out_act.setEnabled(False)
 
-        self.normal_size_Act = QAction("Normal Size", self)
-        self.normal_size_Act.setShortcut('Ctrl+=')
-        self.normal_size_Act.triggered.connect(self.normalSize)
-        self.normal_size_Act.setEnabled(False)
+        self.normal_size_act = QAction("Normal Size", self)
+        self.normal_size_act.setShortcut('Ctrl+=')
+        self.normal_size_act.triggered.connect(self.normalize_size)
+        self.normal_size_act.setEnabled(False)
 
-        # Actions for Views menu
-        # self.tools_menu_act = QAction(QIcon(os.path.join(ICON_PATH, "edit.png")),'Tools View...', self, checkable=True)
-
-        # Create menubar
         menu_bar = self.menuBar()
         menu_bar.setNativeMenuBar(False)
 
@@ -135,7 +134,7 @@ class MeasurerGUI(QMainWindow):
         tool_menu.addSeparator()
         tool_menu.addAction(self.zoom_in_act)
         tool_menu.addAction(self.zoom_out_act)
-        tool_menu.addAction(self.normal_size_Act)
+        tool_menu.addAction(self.normal_size_act)
 
         views_menu = menu_bar.addMenu('Views')
         views_menu.addAction(self.tools_menu_act)
@@ -231,7 +230,7 @@ class MeasurerGUI(QMainWindow):
         self.image_label = Image(self)
         self.image_label.resize(self.image_label.pixmap().size())
 
-        self.scroll_area = QScrollArea()
+        self.scroll_area = Scroller()
         self.scroll_area.setBackgroundRole(QPalette.Dark)
         self.scroll_area.setAlignment(Qt.AlignCenter)
         # self.scroll_area.setWidgetResizable(False)
@@ -251,27 +250,29 @@ class MeasurerGUI(QMainWindow):
         self.revert_act.setEnabled(True)
         self.zoom_in_act.setEnabled(True)
         self.zoom_out_act.setEnabled(True)
-        self.normal_size_Act.setEnabled(True)
+        self.normal_size_act.setEnabled(True)
 
-    def zoomOnImage(self, zoom_value):
+    def zoom_image(self, zoom_value: float) -> None:
         """Zoom in and zoom out."""
         self.zoom_factor *= zoom_value
         self.image_label.resize(self.zoom_factor * self.image_label.pixmap().size())
 
-        self.adjustScrollBar(self.scroll_area.horizontalScrollBar(), zoom_value)
-        self.adjustScrollBar(self.scroll_area.verticalScrollBar(), zoom_value)
+        self.__adjust_scrollbar(self.scroll_area.horizontalScrollBar(), zoom_value)
+        self.__adjust_scrollbar(self.scroll_area.verticalScrollBar(), zoom_value)
 
         self.zoom_in_act.setEnabled(self.zoom_factor < 4.0)
         self.zoom_out_act.setEnabled(self.zoom_factor > 0.333)
 
-    def normalSize(self):
+    def normalize_size(self):
         """View image with its normal dimensions."""
         self.image_label.adjustSize()
         self.zoom_factor = 1.0
 
-    def adjustScrollBar(self, scroll_bar, value):
+    @staticmethod
+    def __adjust_scrollbar(scroll_bar: QScrollBar, value: float) -> None:
         """Adjust the scrollbar when zooming in or out."""
-        scroll_bar.setValue(int(value * scroll_bar.value() + ((value - 1) * scroll_bar.pageStep() / 2)))
+        value = int(value * scroll_bar.value() + ((value - 1) * scroll_bar.pageStep() / 2))
+        scroll_bar.setValue(value)
 
     def aboutDialog(self):
         QMessageBox.about(self, "About Photo Editor",
@@ -286,6 +287,12 @@ class MeasurerGUI(QMainWindow):
                 self.showNormal()
             else:
                 self.showMaximized()
+
+    def wheelEvent(self, event: QWheelEvent) -> None:
+        if event.angleDelta().y() == 120:
+            self.zoom_image(1.2)
+        else:
+            self.zoom_image(0.8)
 
     def closeEvent(self, event):
         pass
